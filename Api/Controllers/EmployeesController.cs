@@ -49,4 +49,15 @@ public class EmployeesController : ControllerBase
 
         return result;
     }
+
+    [SwaggerOperation(Summary = "Get employee paychecks")]
+    [HttpGet("paychecks/{employeeId}")]
+    public async Task<ActionResult<ApiResponse<List<string>>>> GetEmployeePayChecks([FromRoute] int employeeId)
+    {
+        //task: use a more realistic production approach
+        var employeePayChecks = await _employeeService.CalculateEmployeePayCheck(employeeId);
+        if (employeePayChecks.Success)
+            return Ok(employeePayChecks);
+        return BadRequest(employeePayChecks);
+    }
 }

@@ -7,5 +7,6 @@ namespace Api.Services.Interfaces
     {
         Task<List<GetEmployeeDto>> GetAllEmployees();
         Task<GetEmployeeDto> GetEmployeeById(int id);
+        Task<ApiResponse<List<string>>> CalculateEmployeePayCheck(int employeeId);
     }
 }
