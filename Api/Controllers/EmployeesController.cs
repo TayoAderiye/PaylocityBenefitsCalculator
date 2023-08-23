@@ -47,6 +47,6 @@ public class EmployeesController : ControllerBase
         var response = await _employeeService.CalculateEmployeePayCheck(employeeId);
         if (response.Success)
             return Ok(response);
-        return BadRequest(response);
+        return NotFound(response);
     }
 }

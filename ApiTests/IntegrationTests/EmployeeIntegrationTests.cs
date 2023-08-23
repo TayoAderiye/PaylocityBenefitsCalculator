@@ -1,10 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Api.Dtos.Dependent;
 using Api.Dtos.Employee;
 using Api.Models;
+using Api.Repository.Interfaces;
+using Api.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using Moq;
 using Xunit;
 
 namespace ApiTests.IntegrationTests;
@@ -104,6 +109,22 @@ public class EmployeeIntegrationTests : IntegrationTest
     public async Task WhenAskedForANonexistentEmployee_ShouldReturn404()
     {
         var response = await HttpClient.GetAsync($"/api/v1/employees/{int.MinValue}");
+        await response.ShouldReturn(HttpStatusCode.NotFound);
+    }
+
+    //new test case 
+    [Fact]
+    public async Task CalculateEmployeePayCheck_EmployeeNotFound_ReturnsError()
+    {
+        var response = await HttpClient.GetAsync($"/api/v1/employees/paychecks/{int.MinValue}");
+        await response.ShouldReturn(HttpStatusCode.NotFound);
+    }
+
+    //new test case 
+    [Fact]
+    public async Task CalculateEmployeePayCheck_ReturnsCorrectPaychecks()
+    {
+        var response = await HttpClient.GetAsync($"/api/v1/employees/paychecks/1");
         await response.ShouldReturn(HttpStatusCode.NotFound);
     }
 }

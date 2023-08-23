@@ -11,5 +11,6 @@ namespace Api.Models.Data
 
         public DbSet<Dependent> Dependents => Set<Dependent>();
         public DbSet<Employee> Employees => Set<Employee>();
+        public DbSet<SystemConfig> SystemConfig => Set<SystemConfig>();
     }
 }

@@ -9,10 +9,12 @@ namespace Api.Services.Implementations
     public class DbInitializer : IDbInitializer
     {
         private readonly DataContext _context;
+        private readonly ICacheService _cacheService;
 
-        public DbInitializer(DataContext context)
+        public DbInitializer(DataContext context, ICacheService cacheService)
         {
             _context = context;
+            _cacheService = cacheService;
         }
 
         public void Initialize()
@@ -103,6 +105,26 @@ namespace Api.Services.Implementations
                      ).GetAwaiter().GetResult();
                     _context.SaveChangesAsync().GetAwaiter().GetResult();
 
+                }
+
+                if (!_context.SystemConfig.Any())
+                {
+                    _context.SystemConfig.AddAsync(new SystemConfig
+                    {
+                        BaseCost = 1000,
+                        DependentCost = 600,
+                        AdditionalSalaryThreshold = 80000,
+                        SalaryDeductionRate = 0.02m,
+                        AgeBasedDeduction = 200,
+                        PaycheckPerYear = 26
+                    }).GetAwaiter().GetResult();
+                    _context.SaveChangesAsync().GetAwaiter().GetResult();
+                }
+
+                var sysConfig = _context.SystemConfig.FirstOrDefaultAsync().GetAwaiter().GetResult();
+                if (sysConfig != null)
+                {
+                    _cacheService.Set("SystemConfiguration", sysConfig);
                 }
             }
             catch (Exception e)

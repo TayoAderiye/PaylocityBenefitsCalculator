@@ -32,10 +32,11 @@ builder.Services.AddAutoMapper(typeof(Program).Assembly);
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<IDependentService, DependentService>();
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+builder.Services.AddScoped<ICacheService, CacheService>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 
-
+builder.Services.AddMemoryCache();
 
 
 var allowLocalhost = "allow localhost";

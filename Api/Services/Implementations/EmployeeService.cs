@@ -15,17 +15,27 @@ namespace Api.Services.Implementations
     {
         private readonly IMapper _mapper;
         private readonly IRepository<Employee> _employeeRepo;
-        private const decimal BASE_COST = 1000; // Base cost per month
-        private const decimal DEPENDENT_COST = 600; // Cost per dependent per month
-        private const decimal ADDITIONAL_SALARY_THRESHOLD = 80000; // Salary threshold for additional deduction
-        private const decimal SALARY_DEDUCTION_RATE = 0.02m; // 2% of salary
-        private const decimal AGE_BASED_DEDUCTION = 200; // Additional cost for dependents over 50
-        private const decimal PAYCHECKS_PER_YEAR = 26; // Number of paychecks per year
+        private readonly ICacheService _cacheService;
+        private SystemConfig sysConfig = null;
+        private decimal BASE_COST; // Base cost per month
+        private decimal DEPENDENT_COST; // Cost per dependent per month
+        private decimal ADDITIONAL_SALARY_THRESHOLD; // Salary threshold for additional deduction
+        private decimal SALARY_DEDUCTION_RATE; // 2% of salary
+        private decimal AGE_BASED_DEDUCTION; // Additional cost for dependents over 50
+        private decimal PAYCHECKS_PER_YEAR; // Number of paychecks per year
 
-        public EmployeeService(IMapper mapper, IRepository<Employee> employeeRepo)
+        public EmployeeService(IMapper mapper, IRepository<Employee> employeeRepo, ICacheService cacheService)
         {
             _mapper = mapper;
             _employeeRepo = employeeRepo;
+            _cacheService = cacheService;
+            sysConfig = _cacheService.Get<SystemConfig>("SystemConfiguration");
+            BASE_COST = sysConfig.BaseCost;
+            DEPENDENT_COST = sysConfig.DependentCost;
+            ADDITIONAL_SALARY_THRESHOLD = sysConfig.AdditionalSalaryThreshold;
+            SALARY_DEDUCTION_RATE = sysConfig.SalaryDeductionRate;
+            AGE_BASED_DEDUCTION = sysConfig.AgeBasedDeduction;
+            PAYCHECKS_PER_YEAR = sysConfig.PaycheckPerYear;
         }
         public async Task<ApiResponse<List<GetEmployeeDto>>> GetAllEmployees()
         {
@@ -58,7 +68,6 @@ namespace Api.Services.Implementations
             var totalCost = BASE_COST;
             DateTime today = DateTime.Today;
             decimal dependentAllowance = 0.0m;
-            //decimal salaryDeduction = 0.0m;
             decimal additionalDeduction = 0.0m;
             //get dependents of the employee
             var employee = await _employeeRepo.Query().Where(x => x.Id == employeeId).Include(x => x.Dependents).FirstOrDefaultAsync();
@@ -97,8 +106,9 @@ namespace Api.Services.Implementations
             // Calculate net salary for each paycheck
             var netSalary = employee.Salary - totalAnnaulCost;
 
-            var paycheck = Math.Round(netSalary / PAYCHECKS_PER_YEAR, 2);
+            //var paycheck = Math.Round(netSalary / PAYCHECKS_PER_YEAR, 2);
             /// PAYCHECKS_PER_YEAR;
+            //var zzz = Math.Round(netSalary / PAYCHECKS_PER_YEAR, 2);
 
             var paychecks = new List<string>();
 
@@ -106,6 +116,7 @@ namespace Api.Services.Implementations
             for (int i = 0; i < PAYCHECKS_PER_YEAR; i++)
             {
                 //var paycheck = Math.Round(netSalary - benefitsCostPerPaycheck, 2);
+                var paycheck = Math.Round(netSalary / PAYCHECKS_PER_YEAR, 2);
                 paychecks.Add($"PayCheck {i + 1}: {paycheck}");
             }
             result.Success = true;
@@ -116,5 +127,3 @@ namespace Api.Services.Implementations
         }
     }
 }
-
-//console.log(`Paycheck ${ i + 1}: $${ paychecks[i].toFixed(2)}`);
