@@ -21,18 +21,13 @@ public class EmployeesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<ApiResponse<GetEmployeeDto>>> Get(int id)
     {
-        var employee = await _employeeService.GetEmployeeById(id);
-        if (employee is null)
+        var response = await _employeeService.GetEmployeeById(id);
+        if (response.Success)
         {
-            var result = new ApiResponse<GetEmployeeDto>
-            {
-                Data = null,
-                Success = false,
-                Error = "Employee not Found"
-            };
-            return NotFound(result);
+            return Ok(response);
         }
-        return Ok(employee);
+        return NotFound(response);
+       
     }
 
     [SwaggerOperation(Summary = "Get all employees")]
@@ -40,14 +35,8 @@ public class EmployeesController : ControllerBase
     public async Task<ActionResult<ApiResponse<List<GetEmployeeDto>>>> GetAll()
     {
         //task: use a more realistic production approach
-        var employees = await _employeeService.GetAllEmployees();
-        var result = new ApiResponse<List<GetEmployeeDto>>
-        {
-            Data = employees,
-            Success = true
-        };
-
-        return result;
+        var response = await _employeeService.GetAllEmployees();
+        return Ok(response);
     }
 
     [SwaggerOperation(Summary = "Get employee paychecks")]
@@ -55,9 +44,9 @@ public class EmployeesController : ControllerBase
     public async Task<ActionResult<ApiResponse<List<string>>>> GetEmployeePayChecks([FromRoute] int employeeId)
     {
         //task: use a more realistic production approach
-        var employeePayChecks = await _employeeService.CalculateEmployeePayCheck(employeeId);
-        if (employeePayChecks.Success)
-            return Ok(employeePayChecks);
-        return BadRequest(employeePayChecks);
+        var response = await _employeeService.CalculateEmployeePayCheck(employeeId);
+        if (response.Success)
+            return Ok(response);
+        return BadRequest(response);
     }
 }

@@ -23,36 +23,18 @@ public class DependentsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<ApiResponse<GetDependentDto>>> Get(int id)
     {
-        var dependent = await _dependentService.GetDependentById(id);
-        if (dependent is null)
-        {
-            var result = new ApiResponse<GetDependentDto>
-            {
-                Data = null,
-                Success = false,
-                Error = "Dependent not Found"
-            };
-            return NotFound(result);
-        }
-        else
-        {
-            return Ok(dependent);
-        }
-       
+        var response = await _dependentService.GetDependentById(id);
+        if (response.Success)
+            return Ok(response);
+        return NotFound(response);
     }
 
     [SwaggerOperation(Summary = "Get all dependents")]
     [HttpGet("")]
     public async Task<ActionResult<ApiResponse<List<GetDependentDto>>>> GetAll()
     {
-        var dependents = await _dependentService.GetAllDependents();
-        var result = new ApiResponse<List<GetDependentDto>>
-        {
-            Data = dependents,
-            Success = true
-        };
-
-        return Ok(result);
+        var response = await _dependentService.GetAllDependents();
+        return Ok(response);
     }
 
     [SwaggerOperation(Summary = "Create a dependent")]

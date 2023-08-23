@@ -22,19 +22,34 @@ namespace Api.Services.Implementations
         private const decimal AGE_BASED_DEDUCTION = 200; // Additional cost for dependents over 50
         private const decimal PAYCHECKS_PER_YEAR = 26; // Number of paychecks per year
 
-        public EmployeeService(IMapper mapper,IRepository<Employee> employeeRepo)
+        public EmployeeService(IMapper mapper, IRepository<Employee> employeeRepo)
         {
             _mapper = mapper;
             _employeeRepo = employeeRepo;
         }
-        public async Task<List<GetEmployeeDto>> GetAllEmployees()
+        public async Task<ApiResponse<List<GetEmployeeDto>>> GetAllEmployees()
         {
-            return _mapper.Map<List<GetEmployeeDto>>(await _employeeRepo.Query().Include(x => x.Dependents).ToListAsync());
+            var result = new ApiResponse<List<GetEmployeeDto>>();
+            result.Success = true;
+            result.Message = "Employees Retrieved";
+            result.Data = _mapper.Map<List<GetEmployeeDto>>(await _employeeRepo.Query().Include(x => x.Dependents).ToListAsync());
+            return result;
         }
 
-        public async Task<GetEmployeeDto> GetEmployeeById(int id)
+        public async Task<ApiResponse<GetEmployeeDto>> GetEmployeeById(int id)
         {
-            return _mapper.Map<GetEmployeeDto>(await _employeeRepo.Query().Where(x => x.Id == id).Include(x => x.Dependents).FirstOrDefaultAsync());
+            var result = new ApiResponse<GetEmployeeDto>();
+            var employee = _mapper.Map<GetEmployeeDto>(await _employeeRepo.Query().Where(x => x.Id == id).Include(x => x.Dependents).FirstOrDefaultAsync());
+            if (employee is null)
+            {
+                result.Success = false;
+                result.Error = "No Employee Found";
+                return result;
+            }
+            result.Success = true;
+            result.Message = "Employee Retrieved";
+            result.Data = employee;
+            return result;
         }
 
         public async Task<ApiResponse<List<string>>> CalculateEmployeePayCheck(int employeeId)
@@ -42,6 +57,9 @@ namespace Api.Services.Implementations
             var result = new ApiResponse<List<string>>();
             var totalCost = BASE_COST;
             DateTime today = DateTime.Today;
+            decimal dependentAllowance = 0.0m;
+            //decimal salaryDeduction = 0.0m;
+            decimal additionalDeduction = 0.0m;
             //get dependents of the employee
             var employee = await _employeeRepo.Query().Where(x => x.Id == employeeId).Include(x => x.Dependents).FirstOrDefaultAsync();
             if (employee == null)
@@ -51,37 +69,43 @@ namespace Api.Services.Implementations
                 return result;
             }
 
+
+
             // Add dependent costs
             foreach (var dependent in employee.Dependents)
             {
-                totalCost += DEPENDENT_COST;
+                dependentAllowance += DEPENDENT_COST;
                 int age = today.Year - dependent.DateOfBirth.Year;
                 // Add age-based deduction for dependents over 50
                 if (age > 50)
                 {
-                    totalCost += AGE_BASED_DEDUCTION;
+                    dependentAllowance += AGE_BASED_DEDUCTION;
                 }
             }
 
             // Check if salary exceeds the threshold for additional deduction
             if (employee.Salary > ADDITIONAL_SALARY_THRESHOLD)
             {
-                var additionalDeduction = (employee.Salary * SALARY_DEDUCTION_RATE) / 12; // Monthly deduction
-                totalCost += additionalDeduction;
+                additionalDeduction = (employee.Salary * SALARY_DEDUCTION_RATE) / 12; // Monthly deduction
             }
-
+            totalCost = totalCost + dependentAllowance + additionalDeduction;
             // Calculate benefits cost per paycheck
-            var benefitsCostPerPaycheck = totalCost / PAYCHECKS_PER_YEAR;
+            // var benefitsCostPerPaycheck = totalCost / PAYCHECKS_PER_YEAR;
+            //assuming the cost is deducted from employee salary
+            var totalAnnaulCost = totalCost * 12;
 
             // Calculate net salary for each paycheck
-            var netSalary = employee.Salary / PAYCHECKS_PER_YEAR;
+            var netSalary = employee.Salary - totalAnnaulCost;
+
+            var paycheck = Math.Round(netSalary / PAYCHECKS_PER_YEAR, 2);
+            /// PAYCHECKS_PER_YEAR;
 
             var paychecks = new List<string>();
 
 
             for (int i = 0; i < PAYCHECKS_PER_YEAR; i++)
             {
-                var paycheck = Math.Round(netSalary - benefitsCostPerPaycheck, 2);
+                //var paycheck = Math.Round(netSalary - benefitsCostPerPaycheck, 2);
                 paychecks.Add($"PayCheck {i + 1}: {paycheck}");
             }
             result.Success = true;

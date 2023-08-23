@@ -5,8 +5,8 @@ namespace Api.Services.Interfaces
 {
     public interface IEmployeeService
     {
-        Task<List<GetEmployeeDto>> GetAllEmployees();
-        Task<GetEmployeeDto> GetEmployeeById(int id);
+        Task<ApiResponse<List<GetEmployeeDto>>> GetAllEmployees();
+        Task<ApiResponse<GetEmployeeDto>> GetEmployeeById(int id);
         Task<ApiResponse<List<string>>> CalculateEmployeePayCheck(int employeeId);
     }
 }

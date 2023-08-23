@@ -7,10 +7,11 @@ using Api.Repository.Interfaces;
 using Api.Services.Interfaces;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
 namespace Api.Services.Implementations
 {
-    public class DependentService: IDependentService
+    public class DependentService : IDependentService
     {
         private readonly IMapper _mapper;
         private readonly IEmployeeService _employeeService;
@@ -22,14 +23,29 @@ namespace Api.Services.Implementations
             _employeeService = employeeService;
             _dependentRepo = dependentRepo;
         }
-        public async Task<List<GetDependentDto>> GetAllDependents()
+        public async Task<ApiResponse<List<GetDependentDto>>> GetAllDependents()
         {
-            return _mapper.Map<List<GetDependentDto>>(await _dependentRepo.GetAllAysnc());
+            var result = new ApiResponse<List<GetDependentDto>>();
+            result.Success = true;
+            result.Message = "Dependents Retrieved";
+            result.Data = _mapper.Map<List<GetDependentDto>>(await _dependentRepo.GetAllAysnc());
+            return result;
         }
 
-        public async Task<GetDependentDto> GetDependentById(int id)
+        public async Task<ApiResponse<GetDependentDto>> GetDependentById(int id)
         {
-            return _mapper.Map<GetDependentDto>(await _dependentRepo.GetByIdAsync(id));
+            var result = new ApiResponse<GetDependentDto>();
+            var dependent = _mapper.Map<GetDependentDto>(await _dependentRepo.GetByIdAsync(id));
+            if (dependent is null)
+            {
+                result.Success = false;
+                result.Error = "No Dependent Found";
+                return result;
+            }
+            result.Success = true;
+            result.Message = "Dependent Retrieved";
+            result.Data = dependent;
+            return result;
         }
 
         public async Task<ApiResponse<GetDependentDto>> AddDependent(CreateDependentRequest request)
@@ -44,7 +60,7 @@ namespace Api.Services.Implementations
                 return result;
             }
             //check if the dependent to be created is spouse and employee already has a spouse dependent
-            foreach (var item in employee.Dependents)
+            foreach (var item in employee.Data.Dependents)
             {
                 if ((request.Relationship == Relationship.Spouse || request.Relationship == Relationship.DomesticPartner)
                     && (item.Relationship == Relationship.Spouse || item.Relationship == Relationship.DomesticPartner)
