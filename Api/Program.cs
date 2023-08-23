@@ -1,5 +1,7 @@
 using Api;
 using Api.Models.Data;
+using Api.Repository.Implementations;
+using Api.Repository.Interfaces;
 using Api.Services.Implementations;
 using Api.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -30,6 +32,8 @@ builder.Services.AddAutoMapper(typeof(Program).Assembly);
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<IDependentService, DependentService>();
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
 
 
 

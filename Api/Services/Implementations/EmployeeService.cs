@@ -2,6 +2,7 @@
 using Api.Dtos.Employee;
 using Api.Models;
 using Api.Models.Data;
+using Api.Repository.Interfaces;
 using Api.Services.Interfaces;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,7 @@ namespace Api.Services.Implementations
     public class EmployeeService : IEmployeeService
     {
         private readonly IMapper _mapper;
-        private readonly DataContext _context;
+        private readonly IRepository<Employee> _employeeRepo;
         private const decimal BASE_COST = 1000; // Base cost per month
         private const decimal DEPENDENT_COST = 600; // Cost per dependent per month
         private const decimal ADDITIONAL_SALARY_THRESHOLD = 80000; // Salary threshold for additional deduction
@@ -21,19 +22,19 @@ namespace Api.Services.Implementations
         private const decimal AGE_BASED_DEDUCTION = 200; // Additional cost for dependents over 50
         private const decimal PAYCHECKS_PER_YEAR = 26; // Number of paychecks per year
 
-        public EmployeeService(IMapper mapper, DataContext context)
+        public EmployeeService(IMapper mapper,IRepository<Employee> employeeRepo)
         {
             _mapper = mapper;
-            _context = context;
+            _employeeRepo = employeeRepo;
         }
         public async Task<List<GetEmployeeDto>> GetAllEmployees()
         {
-             return _mapper.Map<List<GetEmployeeDto>>(await _context.Employees.Include(x => x.Dependents).ToListAsync());
+            return _mapper.Map<List<GetEmployeeDto>>(await _employeeRepo.Query().Include(x => x.Dependents).ToListAsync());
         }
 
         public async Task<GetEmployeeDto> GetEmployeeById(int id)
         {
-            return _mapper.Map<GetEmployeeDto>(await _context.Employees.Include(x => x.Dependents).Where(x => x.Id == id).FirstOrDefaultAsync());
+            return _mapper.Map<GetEmployeeDto>(await _employeeRepo.Query().Where(x => x.Id == id).Include(x => x.Dependents).FirstOrDefaultAsync());
         }
 
         public async Task<ApiResponse<List<string>>> CalculateEmployeePayCheck(int employeeId)
@@ -42,7 +43,7 @@ namespace Api.Services.Implementations
             var totalCost = BASE_COST;
             DateTime today = DateTime.Today;
             //get dependents of the employee
-            var employee = await _context.Employees.Include(x => x.Dependents).Where(x => x.Id == employeeId).FirstOrDefaultAsync();
+            var employee = await _employeeRepo.Query().Where(x => x.Id == employeeId).Include(x => x.Dependents).FirstOrDefaultAsync();
             if (employee == null)
             {
                 result.Success = false;
@@ -75,14 +76,13 @@ namespace Api.Services.Implementations
             // Calculate net salary for each paycheck
             var netSalary = employee.Salary / PAYCHECKS_PER_YEAR;
 
-            var paychecks =  new List<string>();
+            var paychecks = new List<string>();
 
 
             for (int i = 0; i < PAYCHECKS_PER_YEAR; i++)
             {
                 var paycheck = Math.Round(netSalary - benefitsCostPerPaycheck, 2);
                 paychecks.Add($"PayCheck {i + 1}: {paycheck}");
-
             }
             result.Success = true;
             result.Message = "PayChecks Received";

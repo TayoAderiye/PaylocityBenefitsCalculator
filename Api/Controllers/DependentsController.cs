@@ -34,7 +34,11 @@ public class DependentsController : ControllerBase
             };
             return NotFound(result);
         }
-        return Ok(dependent);
+        else
+        {
+            return Ok(dependent);
+        }
+       
     }
 
     [SwaggerOperation(Summary = "Get all dependents")]
@@ -48,7 +52,7 @@ public class DependentsController : ControllerBase
             Success = true
         };
 
-        return result;
+        return Ok(result);
     }
 
     [SwaggerOperation(Summary = "Create a dependent")]

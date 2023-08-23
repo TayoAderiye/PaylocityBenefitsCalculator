@@ -3,6 +3,7 @@ using Api.Dtos.Employee;
 using Api.Models;
 using Api.Models.Data;
 using Api.Models.DTOs;
+using Api.Repository.Interfaces;
 using Api.Services.Interfaces;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
@@ -12,23 +13,23 @@ namespace Api.Services.Implementations
     public class DependentService: IDependentService
     {
         private readonly IMapper _mapper;
-        private readonly DataContext _context;
         private readonly IEmployeeService _employeeService;
+        private readonly IRepository<Dependent> _dependentRepo;
 
-        public DependentService(IMapper mapper, DataContext context, IEmployeeService employeeService)
+        public DependentService(IMapper mapper, IEmployeeService employeeService, IRepository<Dependent> dependentRepo)
         {
             _mapper = mapper;
-            _context = context;
             _employeeService = employeeService;
+            _dependentRepo = dependentRepo;
         }
         public async Task<List<GetDependentDto>> GetAllDependents()
         {
-            return _mapper.Map<List<GetDependentDto>>(await _context.Dependents.ToListAsync());
+            return _mapper.Map<List<GetDependentDto>>(await _dependentRepo.GetAllAysnc());
         }
 
         public async Task<GetDependentDto> GetDependentById(int id)
         {
-            return _mapper.Map<GetDependentDto>(await _context.Dependents.Where(x => x.Id == id).FirstOrDefaultAsync());
+            return _mapper.Map<GetDependentDto>(await _dependentRepo.GetByIdAsync(id));
         }
 
         public async Task<ApiResponse<GetDependentDto>> AddDependent(CreateDependentRequest request)
@@ -55,8 +56,7 @@ namespace Api.Services.Implementations
                 }
             }
             var model = _mapper.Map<Dependent>(request);
-            await _context.AddAsync(model);
-            await _context.SaveChangesAsync();
+            await _dependentRepo.AddAysnc(model);
             result.Data = _mapper.Map<GetDependentDto>(model);
             result.Success = true;
             result.Message = $"Dependent successfully added to {request.EmployeeId}";

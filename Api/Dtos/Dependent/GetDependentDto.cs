@@ -9,6 +9,6 @@ public class GetDependentDto
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public DateTime DateOfBirth { get; set; }
-    [JsonConverter(typeof(JsonStringEnumConverter))]
+   // [JsonConverter(typeof(JsonStringEnumConverter))]
     public Relationship Relationship { get; set; }
 }
