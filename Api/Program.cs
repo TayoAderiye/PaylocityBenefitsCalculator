@@ -1,4 +1,5 @@
 using Api;
+using Api.Middleware;
 using Api.Models.Data;
 using Api.Repository.Implementations;
 using Api.Repository.Interfaces;
@@ -59,6 +60,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseCors(allowLocalhost);
 

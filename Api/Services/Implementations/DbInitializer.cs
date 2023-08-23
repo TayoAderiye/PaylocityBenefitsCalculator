@@ -1,5 +1,6 @@
 ﻿using Api.Models;
 using Api.Models.Data;
+using Api.Models.Exceptions;
 using Api.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -26,21 +27,24 @@ namespace Api.Services.Implementations
             }
             catch (Exception e)
             {
-
-                throw;
+                throw new DbInitislizerException(e.Message);
             }
         }
 
 
         private void SeedData()
         {
+            //seed deoendent data
             DependentData();
+            //seed sysconfig data
             SystemConfigData();
+            //seed employee data
             EmployeeData();
         }
 
         private void Migrate()
         {
+            //check for pending migration
             if (_context.Database.GetPendingMigrations().Any())
             {
                 _context.Database.Migrate();
@@ -115,6 +119,7 @@ namespace Api.Services.Implementations
             var sysConfig = _context.SystemConfig.FirstOrDefaultAsync().GetAwaiter().GetResult();
             if (sysConfig != null)
             {
+                //store sys config in cache
                 _cacheService.Set("SystemConfiguration", sysConfig);
             }
         }
